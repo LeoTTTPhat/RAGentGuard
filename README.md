@@ -2,7 +2,7 @@
 
 Cross-stage provenance and sink-level containment of content-induced faults in RAG agents.
 
-Release v0.2.1 accompanies the manuscript *Containing Content-Induced Faults in Retrieval-Augmented
+Release v0.2.2 accompanies the manuscript *Containing Content-Induced Faults in Retrieval-Augmented
 Generation Agents through Cross-Stage Provenance* (under review). It contains the library, every
 experiment script, and the raw outputs from which the manuscript's tables and numbers are generated.
 

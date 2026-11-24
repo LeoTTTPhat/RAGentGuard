@@ -65,17 +65,15 @@ def detector_table() -> None:
             s = pct(t)
             cells.append(f"\\best{{{s}}}" if abs(t - best[j]) < 1e-9 and t > 0 else s)
         fpr = f"{100 * b['fpr_mean']:.1f}$\\pm${100 * b['fpr_sd']:.1f}"
-        lines.append(f"{names[k]} & {fpr} & " + " & ".join(cells) + f" & {pct(df['fpr_mean'])} \\\\")
+        hl = "\\hlrow " if k in ("regex", "classifier") else ""  # the detectors used as evidence
+        lines.append(f"{hl}{names[k]} & {fpr} & " + " & ".join(cells) + f" & {pct(df['fpr_mean'])} \\\\")
     meta = d["_meta"]
     tex = r"""\begin{table}[t]
 \centering
-\caption{Content detectors under one calibration budget. Thresholds are set on benign
-development text only (FPR $\le$1\%); held-out benign FPR is mean$\pm$SD over 10 splits
-($n_{\mathrm{test}}=@@NTEST@@$ per split); TPR (\%) on four attack sets never used for tuning
-(IA-b/IA-e: InjecAgent base/enhanced; BIPIA: poisoned e-mails; ADojo: AgentDojo injected tool
-outputs); over the splits the TPR standard deviation is at most @@TPRSD@@ points. For the NeMo rules the calibrated
-``threshold'' is the most permissive rule-family subset within budget. Last column: benign FPR at
-each tool's default setting. Best TPR per column in bold.}
+\caption{Detectors calibrated to 1\% FPR on benign text. FPR: held-out, mean$\pm$SD over 10
+splits ($n=@@NTEST@@$ each); TPR (\%, SD $\le$@@TPRSD@@) on attack sets not used for tuning: IA-b/IA-e,
+InjecAgent base/enhanced; BIPIA, poisoned e-mails; ADojo, AgentDojo tool outputs. FPR$_{\mathrm{def}}$: at
+the default setting. Bold: best TPR; shaded: detectors used as evidence.}
 \label{tab:detectors}
 \scriptsize
 \setlength{\tabcolsep}{1.3pt}
@@ -189,13 +187,10 @@ def injecagent_table() -> None:
         lines.append(row)
     tex = r"""\begin{table*}[t]
 \centering
-\caption{InjecAgent: attack success (ASR, \%) over all cases and attributable containment (CR, \%;
-Eq.~\eqref{eq:containment}) of each configuration, replayed on the same model outputs. Base and
-enhanced settings pooled; detectors calibrated at 1\% benign FPR. $^\ast$Random half of the cases.
-$^{\ast\ast}$Random 20\% of the cases (a subset of that half). The re-execution rows re-run every
-side-effecting call without the user's task (MELON-style), with no attribution.
-$^{\dagger}$Not significant against no defense (exact McNemar, $p\ge0.05$); all other differences
-have $p<0.05$. 95\% intervals: Table~\ref{tab:app-ia}.}
+\caption{InjecAgent (\%): ASR and attributable containment (CR, Eq.~\eqref{eq:containment}),
+replayed on the same outputs; base and enhanced settings pooled. $^\ast$Random half and $^{\ast\ast}$random
+20\% of the cases. Re-execution rows: MELON-style check without attribution. $^{\dagger}$Not
+significant against no defense (McNemar, $p\ge0.05$; all others $p<0.05$). Intervals: Table~\ref{tab:app-ia}.}
 \label{tab:injecagent}
 \footnotesize
 \setlength{\tabcolsep}{3.2pt}
@@ -359,17 +354,15 @@ def agentdojo_table(tag: str = "qwen2.5-7b") -> None:
         lines.append(row)
     n_b, n_a = e["none"]["n_benign"], e["none"]["n_attack"]
     cr_head = "CR\\,\\up & " if show_cr else ""
-    cr_cap = ("attributable containment (CR; an attack counts as contained only if the defense blocked or "
-              "withheld something in that run), " if show_cr else "")
-    cr_note = ("$^{\\dagger}$ASR not significantly different from no defense; " if show_cr else
+    cr_cap = ("containment (CR; counted only if the defense acted in that run), " if show_cr else "")
+    cr_note = ("$^{\\dagger}$ASR not significantly different; " if show_cr else
                "Containment is not reported because the undefended attack rarely succeeds. ")
     tex = r"""\begin{table}[t]
 \centering
-\caption{AgentDojo (Qwen2.5-7B, @@NB@@ benign tasks, @@NA@@ attacked runs): utility without
-attack (U), utility under attack (U$_a$), ASR, @@CRCAP@@share of benign runs
-in which the defense blocked or withheld something (FB), and extra model calls per run made by the
-interventional check (V). @@CRNOTE@@$^{\ddagger}$benign utility significantly different from no
-defense (exact McNemar, $p<0.05$). 95\% intervals: Table~\ref{tab:app-adrag}.}
+\caption{AgentDojo, Qwen2.5-7B (@@NB@@ benign tasks, @@NA@@ attacked runs), \%: utility without (U)
+and under attack (U$_a$), ASR, @@CRCAP@@benign runs with a block or withheld output (FB), and extra model
+calls per run (V). @@CRNOTE@@$^{\ddagger}$U significantly different from no defense (McNemar, $p<0.05$).
+Intervals: Table~\ref{tab:app-adrag}.}
 \label{tab:agentdojo}
 \scriptsize
 \setlength{\tabcolsep}{2.4pt}
@@ -494,9 +487,9 @@ def memory_table() -> None:
     head = " & ".join(f"\\multicolumn{{3}}{{c}}{{{lab}}}" for _, lab in tags)
     tex = r"""\begin{table}[t]
 \centering
-\caption{Cross-session memory poisoning: attack success in the later session (\%) for base (B)
-and enhanced (E) injections, and completion of benign action items (Ben.). With @@MEMN@@ items per
-cell, every 95\% Wilson interval spans at most @@MEMW@@ points.}
+\caption{Memory poisoning (\%): attack success in the later session for base (B) and enhanced (E)
+injections, and benign items completed (Ben.). $n=@@MEMN@@$ per cell; 95\% Wilson intervals span at most
+@@MEMW@@ points.}
 \label{tab:memory}
 \scriptsize
 \setlength{\tabcolsep}{2.2pt}
@@ -591,10 +584,9 @@ def rag_table() -> None:
     head = " & ".join(f"\\multicolumn{{3}}{{c}}{{{lab}}}" for _, lab in tags)
     tex = r"""\begin{table}[t]
 \centering
-\caption{RAG answers under BIPIA injections (500 attacked, 100 benign questions): ASR (\%),
-attributable containment (CR, \%) and benign answer correctness (U, \%).
-$^{\dagger}$Not significant against no defense (exact McNemar, $p\ge0.05$). 95\% intervals:
-Table~\ref{tab:app-adrag}.}
+\caption{RAG answers under BIPIA injections (500 attacked, 100 benign questions), \%: ASR,
+containment (CR) and benign correctness (U). $^{\dagger}$Not significant against no defense (McNemar,
+$p\ge0.05$). Intervals: Table~\ref{tab:app-adrag}.}
 \label{tab:rag}
 \scriptsize
 \setlength{\tabcolsep}{2.2pt}
@@ -685,7 +677,7 @@ def sensitivity_figure() -> None:
                             f"\\addlegendentry{{{names[tag]} {mode}}}")
     if series_a:
         panels.append(r"""\nextgroupplot[title={(a) InjecAgent: mislabelled sources}, xlabel={$P$(injected output labelled \textsc{high})},
-  ylabel={CR (\%)}, ymin=0, ymax=105, legend style={font=\tiny, at={(0.02,0.02)}, anchor=south west}, legend columns=2]
+  ylabel={CR (\%)}, ymin=0, ymax=105, legend style={font=\tiny, at={(0.5,-0.34)}, anchor=north, /tikz/every even column/.append style={column sep=4pt}}, legend cell align=left, legend columns=2]
 """ + "\n".join(series_a))
     # (b) AgentDojo: share of runs with an intervention vs classifier threshold (first-intervention view)
     e = load("agentdojo/qwen2.5-7b/eval.json")
@@ -698,7 +690,7 @@ def sensitivity_figure() -> None:
                 out.append(f"({x:.2f},{100 * (v[key]['rate'] or 0):.1f})")
             return " ".join(out)
         panels.append(r"""\nextgroupplot[title={(b) AgentDojo: classifier threshold}, xlabel={$-\log_{10}(1-\theta_d)$},
-  ylabel={runs with intervention (\%)}, ymin=0, ymax=105, legend style={font=\tiny, at={(0.98,0.98)}, anchor=north east}]
+  ylabel={runs with intervention (\%)}, ymin=0, ymax=105, legend style={font=\tiny, at={(0.5,-0.34)}, anchor=north, /tikz/every even column/.append style={column sep=4pt}}, legend cell align=left, legend columns=1]
 \addplot[okOrange, thick, mark=square*, mark size=1pt] coordinates {""" + pts("s5_benign_intervene") + r"""};\addlegendentry{$\sigma_5$ filter, benign}
 \addplot[okBlue, thick, mark=*, mark size=1pt] coordinates {""" + pts("gate_verify_benign_intervene") + r"""};\addlegendentry{\sys verify, benign}
 \addplot[okOrange, densely dashed, thick, mark=square*, mark size=1pt] coordinates {""" + pts("s5_attack_intervene") + r"""};\addlegendentry{$\sigma_5$ filter, attacks}
@@ -712,7 +704,7 @@ def sensitivity_figure() -> None:
         d, comp, med = ("default (email LOW, news MEDIUM; t*=0.5)", "compromised: poisoned email HIGH",
                         "email MEDIUM (labels raised)")
         panels.append(r"""\nextgroupplot[title={(c) RAG: provenance warnings}, xlabel={$\theta_u$}, ylabel={warning rate (\%)},
-  ymin=0, ymax=105, legend style={font=\tiny, at={(0.02,0.02)}, anchor=south west}]
+  ymin=0, ymax=105, legend style={font=\tiny, at={(0.5,-0.34)}, anchor=north, /tikz/every even column/.append style={column sep=4pt}}, legend cell align=left, legend columns=1]
 \addplot[okBlue, thick, mark=*, mark size=1pt] coordinates {""" + pts(d, "warning_recall_hit") + r"""};\addlegendentry{recall, default labels}
 \addplot[okBlue, densely dashed, thick, mark=*, mark size=1pt] coordinates {""" + pts(d, "warning_fpr") + r"""};\addlegendentry{benign rate, default}
 \addplot[okVermil, thick, mark=triangle*, mark size=1.2pt] coordinates {""" + pts(comp, "warning_recall_hit") + r"""};\addlegendentry{recall, compromised source}
@@ -722,18 +714,16 @@ def sensitivity_figure() -> None:
     tex = r"""\begin{figure*}[t]
 \centering
 \begin{tikzpicture}
-\begin{groupplot}[group style={group size=""" + str(len(panels)) + r""" by 1, horizontal sep=1.3cm},
-  width=0.345\textwidth, height=4.3cm, grid=major, grid style={gray!20},
+\begin{groupplot}[group style={group size=""" + str(len(panels)) + r""" by 1, horizontal sep=1.2cm},
+  width=0.335\textwidth, height=4.3cm, grid=major, grid style={gray!20},
   tick label style={font=\scriptsize}, label style={font=\scriptsize}, title style={font=\footnotesize}]
 """ + "\n".join(panels) + r"""
 \end{groupplot}
 \end{tikzpicture}
-\caption{Sensitivity. (a) Attributable containment on InjecAgent when each injected tool output is
-mislabelled \textsc{high} with the given probability (verify and block modes). (b) AgentDojo,
-Qwen2.5-7B: share of benign and of successfully attacked runs in which an input filter or the
-\sys gate would intervene, as the classifier threshold varies (first-intervention view from the
-logged decisions). (c) RAG: provenance-only warning rates as $\theta_u$ varies, for the default
-labels, for a compromised source labelled \textsc{high}, and with e-mails labelled \textsc{medium}.}
+\caption{Sensitivity. (a) InjecAgent: CR when each injected output is mislabelled \textsc{high} with
+probability $p$. (b) AgentDojo, Qwen2.5-7B: benign and successfully attacked runs in which an input filter
+or the \sys gate would intervene, by classifier threshold (logged decisions). (c) RAG: provenance-warning
+rates by $\theta_u$ for default labels, a compromised \textsc{high} source, and e-mails labelled \textsc{medium}.}
 \label{fig:sensitivity}
 \end{figure*}
 """
@@ -1011,6 +1001,16 @@ def iv(rate, ci) -> str:
     return pct(rate) if not ci else f"{pct(rate)} [{pct(ci[0])}, {pct(ci[1])}]"
 
 
+def fix_ci(rate, ci, n):
+    """A percentile-bootstrap interval collapses to one point when every outcome agrees (0 % or 100 %);
+    use the Wilson interval from the same count instead."""
+    if rate is None or not n or ci is None:
+        return ci
+    if abs(ci[1] - ci[0]) < 1e-12:
+        return wilson_rate(rate, n)
+    return ci
+
+
 def interval_section() -> str:
     """95% intervals for every rate of the main result tables, and the detector SDs."""
     out = [r"""\section{95\% Intervals for the Main Tables}\label{sec:s-intervals}
@@ -1051,8 +1051,10 @@ Detector & FPR & """ + " & ".join(set_name(s) for s in sets) + r""" \\
             if key not in e or (needs_masked(key) and not verify_ok(e)):
                 continue
             r = e[key]
-            cr = "--" if key == "no_defense" else iv(r["containment"], r.get("containment_ci"))
-            rows.append(f"{lab} & {label} & {iv(r['asr_all'], r.get('asr_all_ci'))} & {cr}" + r" \\")
+            cr = "--" if key == "no_defense" else iv(r["containment"], fix_ci(r["containment"], r.get("containment_ci"),
+                                                                            r["n_succ_nodef"]))
+            rows.append(f"{lab} & {label} & {iv(r['asr_all'], fix_ci(r['asr_all'], r.get('asr_all_ci'), r['n']))} & {cr}"
+                        + r" \\")
         rows.append(r"\midrule")
     if rows:
         out.append(r"""\begin{longtable}{@{}llrr@{}}
@@ -1125,9 +1127,11 @@ Model & Defense & B & E & Ben. \\
             r = e.get(key)
             if r is None:
                 continue
-            cr = "--" if key == "none" else iv(r["containment"], r.get("containment_ci"))
+            n_succ = round(e["none"]["asr"] * e["none"]["n_attack"])
+            cr = "--" if key == "none" else iv(r["containment"], fix_ci(r["containment"], r.get("containment_ci"), n_succ))
             u = iv(r["benign_correct"], wilson_rate(r["benign_correct"], r.get("n_benign", e["none"]["n_benign"])))
-            rows.append(f"{lab} & {label} & {iv(r['asr'], r.get('asr_ci'))} & {cr} & {u}" + r" \\")
+            rows.append(f"{lab} & {label} & {iv(r['asr'], fix_ci(r['asr'], r.get('asr_ci'), r['n_attack']))} & {cr} & {u}"
+                        + r" \\")
         rows.append(r"\midrule")
     if rows:
         out.append(r"""\begin{longtable}{@{}llrrr@{}}
@@ -1154,6 +1158,7 @@ IA_STRICT_KEYS = ["no_defense", "S5 filter [regex|classifier]", "S7 max-taint (R
                   "S6+S7 [regex|classifier] review=allow", "S6+S7 [regex|classifier] review=verify",
                   "S6+S7 [regex|classifier] review=block", "S6+S7 [none] review=verify"]
 GATE_DEFAULTS = {"action_min": "0.34", "fuzzy_min": "0.5"}  # Table tab:params
+VERIFY_KEY = "S6+S7 [regex|classifier] review=verify"  # the default configuration (shaded in tables)
 
 
 def appendix_tables() -> None:
@@ -1172,7 +1177,7 @@ def appendix_tables() -> None:
         def skip(e, key: str) -> bool:
             return needs_masked(key) and not verify_ok(e)
 
-        rows = [block("95\\% intervals for Table~\\ref{tab:injecagent} (percentile bootstrap)")]
+        rows = [block("95\\% intervals for Table~\\ref{tab:injecagent} (bootstrap; Wilson at boundary outcomes)")]
         for key, label, _ in IA_ROWS:
             cells = []
             for _, e in evs:
@@ -1180,8 +1185,10 @@ def appendix_tables() -> None:
                 if r is None or skip(e, key):
                     cells += ["--", "--"]
                     continue
-                cells += [iv_only(r["asr_all_ci"]), "--" if key == "no_defense" else iv_only(r["containment_ci"])]
-            rows.append(f"{label} & " + " & ".join(cells) + r" \\")
+                cells += [iv_only(fix_ci(r["asr_all"], r["asr_all_ci"], r["n"])),
+                          "--" if key == "no_defense" else iv_only(fix_ci(r["containment"], r["containment_ci"],
+                                                                          r["n_succ_nodef"]))]
+            rows.append(("\\hlrow " if key == VERIFY_KEY else "") + f"{label} & " + " & ".join(cells) + r" \\")
         rows += [r"\midrule", block("Strict data-stealing criterion (the e-mail must reach the attacker's address)")]
         for key in IA_STRICT_KEYS:
             cells = []
@@ -1191,7 +1198,7 @@ def appendix_tables() -> None:
                     cells += ["--", "--"]
                     continue
                 cells += [pct(r["asr_strict"]), "--" if key == "no_defense" else pct(r["containment_strict"])]
-            rows.append(f"{names[key]} & " + " & ".join(cells) + r" \\")
+            rows.append(("\\hlrow " if key == VERIFY_KEY else "") + f"{names[key]} & " + " & ".join(cells) + r" \\")
         for setting, title in (("compromised source labelled HIGH",
                                 "Injected tool output labelled \\textup{\\textsc{high}} (compromised source)"),
                                ("compromised source, zero-trust mode", "Compromised source, zero-trust mode")):
@@ -1204,7 +1211,7 @@ def appendix_tables() -> None:
                         cells += ["--", "--"]
                         continue
                     cells += [pct(r["asr_all"]), pct(r["containment"])]
-                rows.append(f"\\sys, review$=${rv}" + (" (default)" if rv == "verify" else "") + " & "
+                rows.append(("\\hlrow " if rv == "verify" else "") + f"\\sys, review$=${rv}" + (" (default)" if rv == "verify" else "") + " & "
                             + " & ".join(cells) + r" \\")
         head = " & ".join(f"\\multicolumn{{2}}{{c}}{{{lab}}}" for lab, _ in evs)
         rules = " ".join(f"\\cmidrule(lr){{{2 + 2 * i}-{3 + 2 * i}}}" for i in range(len(evs)))
@@ -1212,11 +1219,10 @@ def appendix_tables() -> None:
         nv_note = (" Verify mode was not run on " + ", ".join(noverify) + " (--).") if noverify else ""
         parts.append(r"""\begin{table*}[t]
 \centering
-\caption{InjecAgent, extended (ASR and CR, \%). Top: 95\% percentile-bootstrap intervals (2{,}000
-resamples) for every rate of Table~\ref{tab:injecagent}. Below: point estimates under the strict
-data-stealing criterion, and when the injected tool output carries a \textsc{high} label (compromised
-source) with and without zero-trust mode. Samples ($^\ast$, $^{\ast\ast}$) as in
-Table~\ref{tab:injecagent}.""" + nv_note + r"""}
+\caption{InjecAgent, extended (\%). Top: 95\% intervals for Table~\ref{tab:injecagent} (bootstrap; Wilson where
+all outcomes agree).
+Below: strict data-stealing criterion, and injected output labelled \textsc{high} (compromised source)
+with and without zero-trust mode. Samples as in Table~\ref{tab:injecagent}.""" + nv_note + r"""}
 \label{tab:app-ia}
 \scriptsize
 \setlength{\tabcolsep}{2.6pt}
@@ -1252,9 +1258,10 @@ Configuration & """ + " & ".join(["ASR & CR"] * len(evs)) + r""" \\
             for _, ad in ads:
                 r = ad.get(key)
                 cells.append("--" if r is None or r.get("containment") is None else pct(r["containment"]))
-                if r and r.get("containment_ci"):
-                    widths.append((r["containment_ci"][1] - r["containment_ci"][0]) / 2)
-            rows.append(f"{label} & " + " & ".join(cells) + r" \\")
+                ci = fix_ci(r.get("containment"), r.get("containment_ci"), r.get("n_succ_nodef")) if r else None
+                if ci:
+                    widths.append((ci[1] - ci[0]) / 2)
+            rows.append(("\\hlrow " if key == VERIFY_KEY else "") + f"{label} & " + " & ".join(cells) + r" \\")
         rows += [r"\midrule", f"\\multicolumn{{{1 + len(ads)}}}{{@{{}}l}}{{\\emph{{Successful attacker calls attributed to the injection}}}} \\\\"]
         for fld, label in (("tainted_value", "by argument value"), ("tainted_action", "by choice of action"),
                            ("either", "by either")):
@@ -1263,9 +1270,8 @@ Configuration & """ + " & ".join(["ASR & CR"] * len(evs)) + r""" \\
                 if ad.get("_attribution_coverage", {}).get("n") else "--" for _, ad in ads) + r" \\")
         parts.append(r"""\begin{table}[t]
 \centering
-\caption{InjecAgent with an attribution-aware attacker (base setting; every value-like token of the payload
-is spelled with spaces): attack success and attributable containment (\%). The 95\% bootstrap intervals of the
-CR values are at most $\pm$""" + pct(max(widths)) + r""" points wide. Samples as in Table~\ref{tab:injecagent}.}
+\caption{InjecAgent, attribution-aware attacker (base setting; value-like tokens spelled with spaces),
+\%. CR intervals are at most $\pm$""" + pct(max(widths)) + r""" points; samples as in Table~\ref{tab:injecagent}.}
 \label{tab:app-adaptive}
 \scriptsize
 \setlength{\tabcolsep}{2.5pt}
@@ -1292,7 +1298,9 @@ Configuration & """ + " & ".join(lab for lab, _ in ads) + r""" \\
                            + " & ".join(vals[lab][0] for lab, _ in sens) + r" \\")
                 return out
             for i, k in enumerate(keys):
-                out.append(f"{label_of(k)} & " + " & ".join(vals[lab][i] for lab, _ in sens) + r" \\")
+                lab_k = label_of(k)
+                out.append(("\\hlrow " if "(default)" in lab_k else "") + f"{lab_k} & "
+                           + " & ".join(vals[lab][i] for lab, _ in sens) + r" \\")
             return out
 
         def lab_default(param):
@@ -1310,8 +1318,8 @@ Configuration & """ + " & ".join(lab for lab, _ in ads) + r""" \\
                                      lambda v: f"{pct(v['s5_asr'])}/{pct(v['s6s7_asr'])}", str)
         parts.append(r"""\begin{table}[t]
 \centering
-\caption{InjecAgent sensitivity (\%): containment (CR) of block mode as the gate parameters vary, and
-ASR of the input filter and of \sys in allow mode as the classifier threshold varies.}
+\caption{InjecAgent sensitivity (\%): block-mode CR by gate parameter, and ASR of the input filter and
+of allow mode by classifier threshold.}
 \label{tab:app-sens}
 \scriptsize
 \setlength{\tabcolsep}{2.2pt}
@@ -1334,7 +1342,7 @@ Value & """ + " & ".join(lab for lab, _ in sens) + r""" \\
             if key not in ad_e:
                 continue
             r = ad_e[key]
-            arows.append(f"{label} & " + " & ".join([
+            arows.append(("\\hlrow " if key == "rg_attr_verify" else "") + f"{label} & " + " & ".join([
                 iv_only(r["benign_utility"].get("ci")), iv_only(r["attack_utility"].get("ci")),
                 iv_only(r["asr"].get("ci")), "--" if key == "none" else iv_only(r["containment_acted"].get("ci")),
                 iv_only(fb_entry(r).get("ci"))]) + r" \\")
@@ -1349,16 +1357,19 @@ Value & """ + " & ".join(lab for lab, _ in sens) + r""" \\
                     cells += ["--"] * 3
                     continue
                 n_ben = r.get("n_benign", e["none"]["n_benign"])
-                cells += [iv_only(r.get("asr_ci")), "--" if key == "none" else iv_only(r.get("containment_ci")),
+                n_succ = round(e["none"]["asr"] * e["none"]["n_attack"])
+                cells += [iv_only(fix_ci(r["asr"], r.get("asr_ci"), r["n_attack"])),
+                          "--" if key == "none" else iv_only(fix_ci(r["containment"], r.get("containment_ci"), n_succ)),
                           iv_only(wilson_rate(r["benign_correct"], n_ben))]
-            rrows.append(f"{label} & " + " & ".join(cells) + r" \\")
+            rrows.append(("\\hlrow " if key == "S5 redact [regex|classifier] + S6 answer gate" else "")
+                         + f"{label} & " + " & ".join(cells) + r" \\")
         rhead = " & ".join(f"\\multicolumn{{3}}{{c}}{{{lab}}}" for lab, _ in rag_e)
         rrules = " ".join(f"\\cmidrule(lr){{{2 + 3 * i}-{4 + 3 * i}}}" for i in range(len(rag_e)))
         parts.append(r"""\begin{table*}[t]
 \centering
-\caption{95\% intervals (\%) for Tables~\ref{tab:agentdojo} and~\ref{tab:rag}. (a) AgentDojo: Wilson
-intervals; CR is taken over the """ + str(ad_e["none"]["asr"]["k"]) + r""" attacks that succeed without a defense.
-(b) RAG answers: percentile-bootstrap intervals for ASR and CR, Wilson intervals for benign correctness (U).}
+\caption{95\% intervals (\%) for Tables~\ref{tab:agentdojo} and~\ref{tab:rag}: (a) AgentDojo, Wilson,
+CR over the """ + str(ad_e["none"]["asr"]["k"]) + r""" attacks that succeed without a defense; (b) RAG,
+bootstrap for ASR and CR (Wilson where all outcomes agree), Wilson for U.}
 \label{tab:app-adrag}
 \scriptsize
 \setlength{\tabcolsep}{3pt}
