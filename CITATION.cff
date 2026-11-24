@@ -1,17 +1,34 @@
 cff-version: 1.2.0
 message: "If you use RAGentGuard in your research, please cite it as below."
 type: software
-title: "RAGentGuard: End-to-End Security and Privacy Auditing for RAG-Agent Pipelines"
-version: 0.1.0
-date-released: 2025-05-09
+authors:
+  - given-names: "Phat T."
+    family-names: "Tran-Truong"
+  - given-names: "Xuan-Bach"
+    family-names: "Le"
+  - given-names: "Ha"
+    family-names: "Son"
+  - given-names: "Tung Q."
+    family-names: "Nguyen"
+  - given-names: "Duy D. X."
+    family-names: "Pham"
+  - given-names: "Khanh"
+    family-names: "Vo"
+  - given-names: "Triet"
+    family-names: "Nguyen"
+title: "RAGentGuard: Cross-Stage Provenance Monitoring for Retrieval-Augmented Generation Agents"
+version: 0.2.0
+date-released: 2026-11-24
 license: MIT
-repository-code: ""
+repository-code: "https://github.com/LeoTTTPhat/RAGentGuard"
 abstract: >
-  RAGentGuard is the first holistic, taint-flow-based security and privacy
-  audit framework for Retrieval-Augmented Generation (RAG) agent pipelines.
-  It tracks adversarial document influence across all seven pipeline stages
-  and detects four attack categories: retrieval injection, memory poisoning,
-  judge manipulation, and cross-tool taint propagation.
+  RAGentGuard is a runtime monitor for retrieval-augmented generation (RAG)
+  agents. It labels every segment of content with an integrity level, gives
+  derived content (tool feedback, memory notes, messages between agents) the
+  least trusted label of its sources, attributes each proposed tool call to the
+  segments it came from, and gates side-effecting calls at dispatch, using
+  content detectors as evidence. This release contains the experiment code and
+  raw outputs of the accompanying manuscript.
 keywords:
   - RAG security
   - prompt injection
@@ -20,7 +37,22 @@ keywords:
   - adversarial ML
 preferred-citation:
   type: unpublished
-  title: "RAGentGuard: End-to-End Security and Privacy Auditing for
-          Retrieval-Augmented Generation Agent Pipelines"
-  year: 2025
-  notes: "Preprint"
+  authors:
+    - given-names: "Phat T."
+      family-names: "Tran-Truong"
+    - given-names: "Xuan-Bach"
+      family-names: "Le"
+    - given-names: "Ha"
+      family-names: "Son"
+    - given-names: "Tung Q."
+      family-names: "Nguyen"
+    - given-names: "Duy D. X."
+      family-names: "Pham"
+    - given-names: "Khanh"
+      family-names: "Vo"
+    - given-names: "Triet"
+      family-names: "Nguyen"
+  title: "Containing Content-Induced Faults in Retrieval-Augmented Generation
+          Agents through Cross-Stage Provenance"
+  year: 2026
+  notes: "Manuscript under review"

@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 
 setup(
     name="ragentguard",
-    version="0.1.0",
-    description="End-to-End Security and Privacy Auditing for RAG-Agent Pipelines",
+    version="0.2.0",
+    description="Cross-stage provenance monitoring for retrieval-augmented generation agents",
     author="RAGentGuard Research Team",
     packages=find_packages(where="src"),
     package_dir={"": "src"},

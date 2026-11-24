@@ -255,3 +255,121 @@ class PolicyEngine:
             )
 
         return None
+
+
+# ====================================================================== #
+# S7 tool-dispatch gate driven by S6 attribution                          #
+# ====================================================================== #
+
+_READ_VERBS = (
+    "get", "search", "read", "view", "list", "fetch", "find", "check", "query", "lookup",
+    "retrieve", "navigate", "browse", "download", "access", "show", "describe", "count",
+)
+
+
+def tool_privilege(tool_name: str, overrides: Optional[dict] = None) -> str:
+    """'read' for retrieval-only tools, 'write' for side-effecting/egress tools.
+
+    The default heuristic classifies by the verb that starts the operation name
+    (after any toolkit prefix); deployments should pass explicit overrides.
+    """
+    if overrides and tool_name in overrides:
+        return overrides[tool_name]
+    parts = re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])|\d+", tool_name or "")
+    words = [w.lower() for w in parts] or [(tool_name or "").lower()]
+    # snake_case names
+    if "_" in (tool_name or ""):
+        words = [w for w in (tool_name or "").lower().split("_") if w]
+    for w in words:
+        if w in _READ_VERBS:
+            return "read"
+        if w in {"send", "grant", "unlock", "pay", "transfer", "deposit", "place", "withdraw", "create",
+                 "update", "move", "manage", "delete", "schedule", "go", "auto", "disable", "share",
+                 "leave", "execute", "give", "post", "reply", "forward", "invite", "add", "remove",
+                 "set", "change", "book", "reserve", "cancel", "upload", "write", "append", "generate",
+                 "follow", "like", "purchase", "buy", "order", "submit", "edit", "rename", "copy",
+                 "modify", "approve", "enable", "lock", "trigger", "run", "call", "dispatch"}:
+            return "write"
+    return "write"
+
+
+@dataclass
+class ToolGateDecision:
+    action: str                      # allow | review | block
+    reasons: List[str]
+    privilege: str
+    attribution: Optional[dict] = None
+    verified: Optional[bool] = None  # result of the interventional check, if run
+
+    @property
+    def blocked(self) -> bool:
+        return self.action == "block"
+
+
+class ToolGatePolicy:
+    """S7 decision rule. Inputs: tool name/arguments, the S6 ToolCallAttribution,
+    and the visible segments (for the session-level and args-only modes).
+
+    attribution mode (default):
+      read-only tool                                   -> allow
+      tainted value/action with evidence on a source    -> block
+      evidence on a supporting segment labelled trusted -> block (defence in depth)
+      tainted without evidence                          -> review_action
+                                                           (allow | block | verify)
+      otherwise                                         -> allow
+    """
+
+    def __init__(self, config: PolicyConfig, privilege_overrides: Optional[dict] = None,
+                 args_detector=None):
+        self.config = config
+        self.overrides = privilege_overrides or {}
+        self.args_detector = args_detector
+
+    def decide(self, tool_name: str, tool_args, attribution=None, segments=None,
+               verifier=None) -> ToolGateDecision:
+        cfg = self.config
+        priv = tool_privilege(tool_name, self.overrides)
+        att = attribution.to_dict() if attribution is not None else None
+        mode = cfg.tool_gate_mode
+        if mode == "none":
+            return ToolGateDecision("allow", ["gate disabled"], priv, att)
+        if mode == "args_only":
+            text = str(tool_args)
+            fired = (self.args_detector.fires(text) if self.args_detector is not None
+                     else bool(scan_for_injection_patterns(text)))
+            if priv == "write" and fired:
+                return ToolGateDecision("block", ["injection evidence in arguments"], priv, att)
+            return ToolGateDecision("allow", [], priv, att)
+        if mode == "max_taint":
+            segs = segments or []
+            session_taint = attribution.session_taint if attribution is not None else 0.0
+            evidence = any(getattr(s, "has_evidence", False) for s in segs)
+            text = str(tool_args)
+            evidence = evidence or bool(scan_for_injection_patterns(text))
+            if session_taint >= cfg.tool_call_block_threshold and evidence:
+                return ToolGateDecision("block", [f"session taint {session_taint:.2f} with evidence"], priv, att)
+            if session_taint >= cfg.tool_call_review_threshold:
+                return ToolGateDecision("review", [f"session taint {session_taint:.2f}"], priv, att)
+            return ToolGateDecision("allow", [], priv, att)
+        # ---------------- attribution mode ---------------- #
+        if priv == "read":
+            return ToolGateDecision("allow", ["read-only tool"], priv, att)
+        if attribution is None:
+            return ToolGateDecision("review", ["no attribution available"], priv, att)
+        reasons = []
+        if attribution.tainted and attribution.evidence_sources:
+            reasons.append("tainted flow from segment with injection evidence")
+            return ToolGateDecision("block", reasons, priv, att)
+        if attribution.evidence_sources and cfg.block_evidence_regardless_of_trust:
+            reasons.append("argument/action supported by evidence-bearing segment")
+            return ToolGateDecision("block", reasons, priv, att)
+        if attribution.tainted:
+            reasons.append("tainted value or action without content evidence")
+            if cfg.review_action == "block":
+                return ToolGateDecision("block", reasons, priv, att)
+            if cfg.review_action == "verify" and verifier is not None:
+                confirmed = bool(verifier(tool_name, tool_args, attribution))
+                reasons.append("interventional check " + ("confirmed" if confirmed else "cleared"))
+                return ToolGateDecision("block" if confirmed else "allow", reasons, priv, att, confirmed)
+            return ToolGateDecision("review", reasons, priv, att)
+        return ToolGateDecision("allow", reasons, priv, att)

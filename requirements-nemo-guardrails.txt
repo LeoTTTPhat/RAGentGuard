@@ -1,2 +1,0 @@
-nemoguardrails==0.21.0
-yara-python==4.5.4

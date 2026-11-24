@@ -86,11 +86,20 @@ class AuditReporter:
 
     def __init__(self, config_dict: Optional[Dict[str, Any]] = None):
         self._violations: List[PolicyViolation] = []
+        self._events: List[Dict[str, Any]] = []   # S6 attribution / S7 gate records
         self._session_start = datetime.utcnow()
         self._config = config_dict or {}
 
     def record(self, violation: PolicyViolation) -> None:
         self._violations.append(violation)
+
+    def record_event(self, event: Dict[str, Any]) -> None:
+        """Record a stage event (e.g. an S6 attribution result or an S7 decision)."""
+        self._events.append({"timestamp": datetime.utcnow().isoformat(), **event})
+
+    @property
+    def events(self) -> List[Dict[str, Any]]:
+        return list(self._events)
 
     def record_many(self, violations: List[PolicyViolation]) -> None:
         self._violations.extend(violations)
@@ -129,6 +138,7 @@ class AuditReporter:
                 }
                 for v in self._violations
             ],
+            "stage_events": list(self._events),
         }
 
     def write_json(self, path: str) -> None:
@@ -259,4 +269,5 @@ class AuditReporter:
 
     def reset(self) -> None:
         self._violations.clear()
+        self._events.clear()
         self._session_start = datetime.utcnow()

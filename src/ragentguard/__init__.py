@@ -1,5 +1,5 @@
 """
-RAGentGuard: End-to-End Security and Privacy Auditing for RAG-Agent Pipelines.
+RAGentGuard: cross-stage provenance monitoring for retrieval-augmented generation agents.
 
 Quick start:
     from ragentguard import RAGentGuard
@@ -23,7 +23,7 @@ from .core import (
 )
 from .monitors import PolicyBlockedError, ToolCallBlockedError
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __all__ = [
     "RAGentGuard",
     "RAGentGuardConfig",

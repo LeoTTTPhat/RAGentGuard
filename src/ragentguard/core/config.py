@@ -45,6 +45,34 @@ class PolicyConfig:
     # Taint score above which a tool call is sent to human review
     tool_call_review_threshold: float = 0.3
 
+    # ---- tool-dispatch gate (S7) --------------------------------------- #
+    # "attribution": decide from S6 argument/action provenance + content evidence
+    #                (default; uses the output of the attribution stage)
+    # "max_taint"  : first-submission rule -- session max-taint >= block threshold
+    #                and injection evidence anywhere in the session
+    # "args_only"  : single-stage tool filter -- detectors applied to the arguments
+    # "none"       : no tool gate
+    tool_gate_mode: str = "attribution"
+    # What to do with a side-effecting call whose arguments/action are tainted but
+    # carry no content evidence: "allow" (log only), "block", or "verify" (run the
+    # interventional check supplied by the caller and block if it confirms).
+    review_action: str = "verify"
+    # Block when an attributed segment carries evidence even if it is labelled
+    # trusted (defence in depth against compromised high-trust sources).
+    block_evidence_regardless_of_trust: bool = True
+    # S6 attribution thresholds
+    attribution_fuzzy_min: float = 0.5
+    action_attribution_min: float = 0.34
+    # Trust tier boundary: a segment is untrusted when value(tier) < this value
+    untrusted_below: float = 0.5
+    # Treat every non-user, non-system segment as untrusted
+    zero_trust: bool = False
+
+    # ---- context action (S5) ------------------------------------------- #
+    # "block_context": refuse the whole query when injection risk fires (R1 rule)
+    # "redact_chunk" : drop only the chunks with content evidence and continue
+    context_action: str = "block_context"
+
     # ---- global -------------------------------------------------------- #
     # Master switch: if False, all violations are logged but never blocked
     blocking_mode: bool = True
@@ -55,7 +83,7 @@ class PolicyConfig:
 @dataclass
 class AttributionConfig:
     """Settings for generation-time attribution."""
-    method: str = "attention_rollout"    # "attention_rollout" | "gradient" | "random_baseline"
+    method: str = "overlap"              # "overlap" (default, model-free) | "attention_rollout" | "gradient"
     top_k_sources: int = 5               # how many contributing sources to report
     min_attribution_score: float = 0.05  # ignore sources below this threshold
 
