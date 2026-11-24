@@ -36,6 +36,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main
           release_tree=$(git rev-parse 'prepared-release^{tree}')
-          publish_commit=$(git commit-tree "$release_tree" -p prepared-release -p "$GITHUB_SHA" -m 'Publish prepared RAGentGuard v0.2.0 release')
+          publish_commit=$(git commit-tree "$release_tree" -p prepared-release -p origin/main -m 'Publish prepared RAGentGuard v0.2.0 release')
           git push origin "$publish_commit:refs/heads/main" refs/tags/v0.2.0
