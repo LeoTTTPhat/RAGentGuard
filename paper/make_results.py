@@ -131,6 +131,8 @@ IA_ROWS = [
     ("S5 filter [regex|classifier]", "$\\sigma_5$ filter: rules $\\cup$ classifier", "S5"),
     ("S7 args-only [regex]", "$\\sigma_7$ argument filter (no provenance)", "S7"),
     ("S7 max-taint (R1 rule) [regex]", "$\\sigma_7$ max-taint (session-level)", "S7"),
+    ("S7 re-execution check on every side-effecting call (no S5, no S6)", "$\\sigma_7$ re-execution check of every call", "S7"),
+    ("S5 filter [regex|classifier] + re-execution check (no S6)", "$\\sigma_5$ filter $+$ re-execution check", "S7"),
     ("S6+S7 [regex|classifier] review=allow", "\\sys, review$=$allow", "RG"),
     ("S6+S7 [regex|classifier] review=verify", "\\sys, review$=$verify (default)", "RG"),
     ("S6+S7 [regex|classifier] review=block", "\\sys, review$=$block", "RG"),
@@ -139,9 +141,13 @@ IA_ROWS = [
 
 
 def verify_ok(e) -> bool:
-    """Verify mode needs the masked (task-neutral) re-runs; Qwen-72B was run without them, and its replayed
-    'verify' numbers would silently equal allow mode."""
+    """Verify mode and the re-execution baselines need the masked (task-neutral) re-runs; without them the
+    replayed numbers would silently equal allow mode."""
     return bool((e or {}).get("_meta", {}).get("masked_available"))
+
+
+def needs_masked(key: str) -> bool:
+    return "verify" in key or "re-execution" in key
 
 
 def injecagent_table() -> None:
@@ -166,7 +172,7 @@ def injecagent_table() -> None:
         cells = []
         for tag, _ in IA_MODELS:
             e = evals.get(tag)
-            if e is None or key not in e or ("verify" in key and not verify_ok(e)):
+            if e is None or key not in e or (needs_masked(key) and not verify_ok(e)):
                 cells += ["--", "--"]
                 continue
             r = e[key]
@@ -186,8 +192,8 @@ def injecagent_table() -> None:
 \caption{InjecAgent: attack success (ASR, \%) over all cases and attributable containment (CR, \%;
 Eq.~\eqref{eq:containment}) of each configuration, replayed on the same model outputs. Base and
 enhanced settings pooled; detectors calibrated at 1\% benign FPR. $^\ast$Random half of the cases.
-$^{\ast\ast}$Random 20\% of the cases (a subset of that half), without the masked re-runs that verify
-mode needs (--).
+$^{\ast\ast}$Random 20\% of the cases (a subset of that half). The re-execution rows re-run every
+side-effecting call without the user's task (MELON-style), with no attribution.
 $^{\dagger}$Not significant against no defense (exact McNemar, $p\ge0.05$); all other differences
 have $p<0.05$. 95\% intervals: Table~\ref{tab:app-ia}.}
 \label{tab:injecagent}
@@ -220,8 +226,9 @@ Configuration & """ + sub + r""" \\
                            ("S6+S7 [regex|classifier] review=allow", "Allow"),
                            ("S6+S7 [regex|classifier] review=verify", "Verify"),
                            ("S6+S7 [regex|classifier] review=block", "Block"),
-                           ("S6+S7 [none] review=verify", "NoEvVerify")):
-            if key in e and not ("verify" in key and not verify_ok(e)):
+                           ("S6+S7 [none] review=verify", "NoEvVerify"),
+                           ("S7 re-execution check on every side-effecting call (no S5, no S6)", "Melon"), ("S5 filter [regex|classifier] + re-execution check (no S6)", "FilterMelon")):
+            if key in e and not (needs_masked(key) and not verify_ok(e)):
                 macro(f"IA{m}{short}CR", pct(e[key]["containment"]))
                 macro(f"IA{m}{short}ASR", pct(e[key]["asr_all"]))
         cov = e.get("_attribution_coverage", {})
@@ -242,14 +249,15 @@ IA_KEYS = (("S5 filter [regex|classifier]", "SFive"), ("S7 args-only [regex]", "
            ("S6+S7 [regex|classifier] review=allow", "Allow"),
            ("S6+S7 [regex|classifier] review=verify", "Verify"),
            ("S6+S7 [regex|classifier] review=block", "Block"),
-           ("S6+S7 [none] review=verify", "NoEvVerify"))
+           ("S6+S7 [none] review=verify", "NoEvVerify"),
+           ("S7 re-execution check on every side-effecting call (no S5, no S6)", "Melon"), ("S5 filter [regex|classifier] + re-execution check (no S6)", "FilterMelon"))
 
 
 def ia_extra_macros(m: str, e: dict) -> None:
     """By-setting and strict containment, compromised sources, label noise, sensitivity, adaptive attack."""
     vok = verify_ok(e)
     for key, short in IA_KEYS:
-        if key not in e or ("verify" in key and not vok):
+        if key not in e or (needs_masked(key) and not vok):
             continue
         bs = e[key].get("by_setting", {})
         macro(f"IA{m}{short}CRbase", pct(bs.get("base", {}).get("containment")))
@@ -297,6 +305,13 @@ def ia_extra_macros(m: str, e: dict) -> None:
             macro(f"IA{m}AdCovAction", pct(cov["tainted_action"] / cov["n"]))
         macro(f"IA{m}AdMaskedAvail", ad.get("_masked_available"))
     macro(f"IA{m}MaskedAvail", e.get("_meta", {}).get("masked_available"))
+    ci = e.get("_clean_intervention")
+    if ci and ci.get("n"):
+        macro(f"IA{m}CleanN", ci["n"])
+        macro(f"IA{m}CleanUndone", pct(ci["undone"] / ci["n"]))
+        macro(f"IA{m}CleanUndoneLo", pct(ci["undone_ci"][0]))
+        macro(f"IA{m}CleanTaintedUndone", pct(ci["undone_and_tainted"] / max(1, ci["tainted"])))
+        macro(f"IA{m}CleanNotTaintedUndone", ci["undone_not_tainted"])
 
 # ---------------------------------------------------------------------- #
 AD_ROWS = [
@@ -329,7 +344,7 @@ def agentdojo_table(tag: str = "qwen2.5-7b") -> None:
         if key not in e:
             continue
         r = e[key]
-        cr = "--" if key == "none" else pct(r["containment"]["rate"])
+        cr = "--" if key == "none" else pct(r["containment_acted"]["rate"])
         if key != "none" and (r.get("mcnemar_asr_vs_none_p") or 0) >= 0.05:
             cr += "$^{\\dagger}$"
         ub = pct(r["benign_utility"]["rate"])
@@ -344,7 +359,8 @@ def agentdojo_table(tag: str = "qwen2.5-7b") -> None:
         lines.append(row)
     n_b, n_a = e["none"]["n_benign"], e["none"]["n_attack"]
     cr_head = "CR\\,\\up & " if show_cr else ""
-    cr_cap = ("attributable containment (CR), " if show_cr else "")
+    cr_cap = ("attributable containment (CR; an attack counts as contained only if the defense blocked or "
+              "withheld something in that run), " if show_cr else "")
     cr_note = ("$^{\\dagger}$ASR not significantly different from no defense; " if show_cr else
                "Containment is not reported because the undefended attack rarely succeeds. ")
     tex = r"""\begin{table}[t]
@@ -377,17 +393,24 @@ Configuration & U\,\up & U$_a$\,\up & ASR\,\down & @@CRHEAD@@FB\,\down & V\,\dow
         macro(k + "U", pct(r["benign_utility"]["rate"]))
         macro(k + "Ua", pct(r["attack_utility"]["rate"]))
         macro(k + "ASR", pct(r["asr"]["rate"]))
-        macro(k + "CR", pct(r["containment"]["rate"]))
-        macro(k + "CRk", r["containment"]["k"])
-        macro(k + "CRn", r["containment"]["n"])
+        macro(k + "CR", pct(r["containment_acted"]["rate"]))
+        macro(k + "CRk", r["containment_acted"]["k"])
+        macro(k + "CRn", r["containment_acted"]["n"])
+        macro(k + "NoActK", r.get("contained_without_action", 0))
         macro(k + "ASRk", r["asr"]["k"])
         macro(k + "FB", pct(max(r["benign_episodes_with_block"]["rate"] or 0, r["benign_episodes_with_redaction"]["rate"] or 0)))
         macro(k + "V", f"{r['verifier_calls_per_episode']:.2f}")
-        for nm, dct in (("CR", r["containment"]), ("U", r["benign_utility"]), ("FB", fb_entry(r))):
+        for nm, dct in (("CR", r["containment_acted"]), ("U", r["benign_utility"]), ("FB", fb_entry(r))):
             if dct.get("ci"):
                 macro(k + nm + "lo", pct(dct["ci"][0]))
                 macro(k + nm + "hi", pct(dct["ci"][1]))
     macro("ADNBenign", n_b)
+    var = e.get("_rerun_variability", {})
+    for fld, nm in (("attack_succ_to_fail", "SuccFail"), ("attack_fail_to_succ", "FailSucc"),
+                    ("benign_utility_changed", "Ben")):
+        if var.get(fld, {}).get("n"):
+            macro(f"ADVar{nm}K", var[fld]["k"])
+            macro(f"ADVar{nm}N", var[fld]["n"])
     macro("ADNAttack", n_a)
     if e.get("_gate_latency_ms_mean_over_episodes") is not None:
         macro("ADGateMs", f"{e['_gate_latency_ms_mean_over_episodes']:.2f}")
@@ -755,7 +778,7 @@ Detector & Budget & """ + head + r""" \\
         if not e:
             continue
         for key, label, _ in IA_ROWS:
-            if key not in e or ("verify" in key and not verify_ok(e)):
+            if key not in e or (needs_masked(key) and not verify_ok(e)):
                 continue
             r = e[key]
             bs, ba = r.get("by_setting", {}), r.get("by_attack", {})
@@ -853,7 +876,7 @@ Model & Parameter & Values \\
         if not e:
             continue
         for key, label, _ in IA_ROWS:
-            if key not in e or key == "no_defense" or ("verify" in key and not verify_ok(e)):
+            if key not in e or key == "no_defense" or (needs_masked(key) and not verify_ok(e)):
                 continue
             r = e[key]
             rows.append(f"{lab} & {label} & {pct(r.get('containment'))} & {pct(r.get('containment_strict'))} \\\\")
@@ -1025,7 +1048,7 @@ Detector & FPR & """ + " & ".join(set_name(s) for s in sets) + r""" \\
         if not e:
             continue
         for key, label, _ in IA_ROWS:
-            if key not in e or ("verify" in key and not verify_ok(e)):
+            if key not in e or (needs_masked(key) and not verify_ok(e)):
                 continue
             r = e[key]
             cr = "--" if key == "no_defense" else iv(r["containment"], r.get("containment_ci"))
@@ -1054,7 +1077,7 @@ Model & Configuration & ASR & CR \\
             cells = [iv(r["benign_utility"]["rate"], r["benign_utility"].get("ci")),
                      iv(r["attack_utility"]["rate"], r["attack_utility"].get("ci")),
                      iv(r["asr"]["rate"], r["asr"].get("ci")),
-                     "--" if key == "none" else iv(r["containment"]["rate"], r["containment"].get("ci")),
+                     "--" if key == "none" else iv(r["containment_acted"]["rate"], r["containment_acted"].get("ci")),
                      iv(f["rate"], f.get("ci"))]
             rows.append(f"{label} & " + " & ".join(cells) + r" \\")
         out.append(r"""\begin{table}[h]\centering\scriptsize\setlength{\tabcolsep}{3pt}
@@ -1127,6 +1150,7 @@ def iv_only(ci) -> str:
 
 
 IA_STRICT_KEYS = ["no_defense", "S5 filter [regex|classifier]", "S7 max-taint (R1 rule) [regex]",
+                  "S7 re-execution check on every side-effecting call (no S5, no S6)", "S5 filter [regex|classifier] + re-execution check (no S6)",
                   "S6+S7 [regex|classifier] review=allow", "S6+S7 [regex|classifier] review=verify",
                   "S6+S7 [regex|classifier] review=block", "S6+S7 [none] review=verify"]
 GATE_DEFAULTS = {"action_min": "0.34", "fuzzy_min": "0.5"}  # Table tab:params
@@ -1146,7 +1170,7 @@ def appendix_tables() -> None:
             return f"\\multicolumn{{{ncol}}}{{@{{}}l}}{{\\emph{{{title}}}}} \\\\"
 
         def skip(e, key: str) -> bool:
-            return "verify" in key and not verify_ok(e)
+            return needs_masked(key) and not verify_ok(e)
 
         rows = [block("95\\% intervals for Table~\\ref{tab:injecagent} (percentile bootstrap)")]
         for key, label, _ in IA_ROWS:
@@ -1184,13 +1208,15 @@ def appendix_tables() -> None:
                             + " & ".join(cells) + r" \\")
         head = " & ".join(f"\\multicolumn{{2}}{{c}}{{{lab}}}" for lab, _ in evs)
         rules = " ".join(f"\\cmidrule(lr){{{2 + 2 * i}-{3 + 2 * i}}}" for i in range(len(evs)))
+        noverify = [lab for lab, e in evs if not verify_ok(e)]
+        nv_note = (" Verify mode was not run on " + ", ".join(noverify) + " (--).") if noverify else ""
         parts.append(r"""\begin{table*}[t]
 \centering
 \caption{InjecAgent, extended (ASR and CR, \%). Top: 95\% percentile-bootstrap intervals (2{,}000
 resamples) for every rate of Table~\ref{tab:injecagent}. Below: point estimates under the strict
 data-stealing criterion, and when the injected tool output carries a \textsc{high} label (compromised
 source) with and without zero-trust mode. Samples ($^\ast$, $^{\ast\ast}$) as in
-Table~\ref{tab:injecagent}; verify mode was not run on Qwen-72B (--).}
+Table~\ref{tab:injecagent}.""" + nv_note + r"""}
 \label{tab:app-ia}
 \scriptsize
 \setlength{\tabcolsep}{2.6pt}
@@ -1205,37 +1231,47 @@ Configuration & """ + " & ".join(["ASR & CR"] * len(evs)) + r""" \\
 \end{tabular}
 \end{table*}
 """)
-    # attribution-aware attacker
+    # attribution-aware attacker, one column per model
     ads = [(lab, e["_adaptive"]) for lab, e in evs if e.get("_adaptive", {}).get("no_defense", {}).get("n")]
     if ads:
-        rows = []
-        for lab, ad in ads:
-            if len(ads) > 1:
-                rows.append(f"\\multicolumn{{3}}{{@{{}}l}}{{\\emph{{{lab}}}}} \\\\")
-            for k, r in ad.items():
-                if k.startswith("_"):
-                    continue
-                cr = "--" if k == "no_defense" else iv(r["containment"], r["containment_ci"])
-                rows.append(f"{names.get(k, k)} & {iv(r['asr_all'], r['asr_all_ci'])} & {cr} \\\\")
-            cov = ad.get("_attribution_coverage", {})
-            if cov.get("n"):
-                rows.append(r"\midrule")
-                rows.append(f"Attributed successful calls: value / action / either & \\multicolumn{{2}}{{r}}{{"
-                            f"{pct(cov['tainted_value'] / cov['n'])} / {pct(cov['tainted_action'] / cov['n'])} / "
-                            f"{pct(cov['either'] / cov['n'])}}} \\\\")
-        model = "" if len(ads) > 1 else ads[0][0].replace("Qwen-", "Qwen2.5-") + ", "
+        ad_rows = [("S5 filter [regex|classifier]", "$\\sigma_5$ filter: rules $\\cup$ classifier"),
+                   ("S6+S7 [regex|classifier] review=allow", "\\sys, review$=$allow"),
+                   ("S6+S7 [regex|classifier] review=verify", "\\sys, review$=$verify (default)"),
+                   ("S6+S7 [regex|classifier] review=block", "\\sys, review$=$block"),
+                   ("S7 re-execution check on every side-effecting call (no S5, no S6)",
+                    "$\\sigma_7$ re-execution check of every call"),
+                   ("S5 filter [regex|classifier] + re-execution check (no S6)",
+                    "$\\sigma_5$ filter $+$ re-execution check")]
+        rows = ["Cases / successful attacks & " + " & ".join(
+            f"{ad['no_defense']['n']} / {ad['no_defense']['n_succ_nodef']}" for _, ad in ads) + r" \\",
+                "ASR without defense & " + " & ".join(pct(ad["no_defense"]["asr_all"]) for _, ad in ads) + r" \\",
+                r"\midrule", f"\\multicolumn{{{1 + len(ads)}}}{{@{{}}l}}{{\\emph{{Attributable containment (CR)}}}} \\\\"]
+        widths = []
+        for key, label in ad_rows:
+            cells = []
+            for _, ad in ads:
+                r = ad.get(key)
+                cells.append("--" if r is None or r.get("containment") is None else pct(r["containment"]))
+                if r and r.get("containment_ci"):
+                    widths.append((r["containment_ci"][1] - r["containment_ci"][0]) / 2)
+            rows.append(f"{label} & " + " & ".join(cells) + r" \\")
+        rows += [r"\midrule", f"\\multicolumn{{{1 + len(ads)}}}{{@{{}}l}}{{\\emph{{Successful attacker calls attributed to the injection}}}} \\\\"]
+        for fld, label in (("tainted_value", "by argument value"), ("tainted_action", "by choice of action"),
+                           ("either", "by either")):
+            rows.append(f"{label} & " + " & ".join(
+                pct(ad["_attribution_coverage"][fld] / ad["_attribution_coverage"]["n"])
+                if ad.get("_attribution_coverage", {}).get("n") else "--" for _, ad in ads) + r" \\")
         parts.append(r"""\begin{table}[t]
 \centering
-\caption{InjecAgent with an attribution-aware attacker (""" + model + f"{ads[0][1]['no_defense']['n']:,}".replace(",", "{,}") + r""" base-setting
-cases; every value-like token of the payload is spelled with spaces): ASR and CR (\%) with 95\% bootstrap
-intervals, and the share of successful attacker calls whose argument value, action, or either is attributed
-to the injected output.}
+\caption{InjecAgent with an attribution-aware attacker (base setting; every value-like token of the payload
+is spelled with spaces): attack success and attributable containment (\%). The 95\% bootstrap intervals of the
+CR values are at most $\pm$""" + pct(max(widths)) + r""" points wide. Samples as in Table~\ref{tab:injecagent}.}
 \label{tab:app-adaptive}
 \scriptsize
 \setlength{\tabcolsep}{2.5pt}
-\begin{tabular}{@{}lrr@{}}
+\begin{tabular}{@{}l""" + "r" * len(ads) + r"""@{}}
 \toprule
-Configuration & ASR & CR \\
+Configuration & """ + " & ".join(lab for lab, _ in ads) + r""" \\
 \midrule
 """ + "\n".join(rows) + r"""
 \bottomrule
@@ -1300,7 +1336,7 @@ Value & """ + " & ".join(lab for lab, _ in sens) + r""" \\
             r = ad_e[key]
             arows.append(f"{label} & " + " & ".join([
                 iv_only(r["benign_utility"].get("ci")), iv_only(r["attack_utility"].get("ci")),
-                iv_only(r["asr"].get("ci")), "--" if key == "none" else iv_only(r["containment"].get("ci")),
+                iv_only(r["asr"].get("ci")), "--" if key == "none" else iv_only(r["containment_acted"].get("ci")),
                 iv_only(fb_entry(r).get("ci"))]) + r" \\")
         rrows = []
         for key, label in RAG_ROWS:
