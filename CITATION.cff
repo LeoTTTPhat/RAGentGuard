@@ -17,7 +17,7 @@ authors:
   - given-names: "Triet"
     family-names: "Nguyen"
 title: "RAGentGuard: Cross-Stage Provenance Monitoring for Retrieval-Augmented Generation Agents"
-version: 0.2.0
+version: 0.2.1
 date-released: 2026-11-24
 license: MIT
 repository-code: "https://github.com/LeoTTTPhat/RAGentGuard"
