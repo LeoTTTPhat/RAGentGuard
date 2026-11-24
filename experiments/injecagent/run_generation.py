@@ -50,7 +50,7 @@ def main() -> None:
     ap.add_argument("--model", required=True)
     ap.add_argument("--tag", required=True)
     ap.add_argument("--variant", default="none",
-                    choices=["none", "spotlight", "sandwich", "masked", "adaptive", "adaptive_masked"])
+                    choices=["none", "spotlight", "sandwich", "masked", "adaptive", "adaptive_masked", "clean"])
     ap.add_argument("--settings", nargs="+", default=["base", "enhanced"])
     ap.add_argument("--attacks", nargs="+", default=["dh", "ds"])
     ap.add_argument("--frac", type=float, default=1.0, help="fraction of case indices per attack")
@@ -74,7 +74,9 @@ def main() -> None:
     cases = {(a, s): data.load_cases(a, s) for a in args.attacks for s in args.settings}
     if args.variant.startswith("adaptive"):
         cases = {k: [data.adaptive_item(it) for it in v] for k, v in cases.items()}
-    prompt_variant = {"adaptive": "none", "adaptive_masked": "masked"}.get(args.variant, args.variant)
+    if args.variant == "clean":  # step 1 only: does the attacker call survive removing the injection?
+        cases = {k: [data.clean_item(it) for it in v] for k, v in cases.items()}
+    prompt_variant = {"adaptive": "none", "adaptive_masked": "masked", "clean": "none"}.get(args.variant, args.variant)
 
     # ---------------- step 1 ---------------- #
     for attack in args.attacks:
@@ -115,7 +117,7 @@ def main() -> None:
                   f"{len(idx_list)} idx done ({dt:.1f}s, {len(reqs)} prompts)", flush=True)
 
     # ---------------- step 2 (data stealing) ---------------- #
-    if "ds" in args.attacks:
+    if "ds" in args.attacks and args.variant != "clean":
         reqs_all = []
         for setting in args.settings:
             for idx, item in enumerate(cases[("ds", setting)]):

@@ -2,7 +2,7 @@
 
 Cross-stage provenance and sink-level containment of content-induced faults in RAG agents.
 
-Release v0.2.0 accompanies the manuscript *Containing Content-Induced Faults in Retrieval-Augmented
+Release v0.2.1 accompanies the manuscript *Containing Content-Induced Faults in Retrieval-Augmented
 Generation Agents through Cross-Stage Provenance* (under review). It contains the library, every
 experiment script, and the raw outputs from which the manuscript's tables and numbers are generated.
 
@@ -87,7 +87,7 @@ command they ran.
 | Study | Generate | Evaluate |
 |---|---|---|
 | Detector calibration (8 detectors, 10 splits) | `python -m experiments.calibration.benign_pool`; `python -m experiments.agentdojo_exp.gt_texts`; `python -m experiments.calibration.score_all` | `python -m experiments.calibration.calibrate`; `python -m experiments.calibration.baselines`; `python -m experiments.calibration.latency` |
-| InjecAgent (1,054 cases x 2 settings) | `python -m experiments.injecagent.run_generation --model <hf-id> --tag <tag> --variant none [--frac 0.5 / 0.2]`; masked re-runs: `python -m experiments.injecagent.masked_keys <tag>` then `--variant masked --only-keys run/masked_keys_<tag>.json --trajectory-from output/injecagent/<tag>/none/gen.jsonl`; attribution-aware attacker: `--variant adaptive --settings base` (+ `adaptive_masked`) | `python -m experiments.injecagent.evaluate --tags qwen2.5-7b llama3.1-8b qwen2.5-32b qwen2.5-72b` |
+| InjecAgent (1,054 cases x 2 settings) | `python -m experiments.injecagent.run_generation --model <hf-id> --tag <tag> --variant none [--frac 0.5 / 0.2]`; masked re-runs: `python -m experiments.injecagent.masked_keys <tag>` then `--variant masked --only-keys run/masked_keys_<tag>.json --trajectory-from output/injecagent/<tag>/none/gen.jsonl`; attribution-aware attacker: `--variant adaptive --settings base` (+ `adaptive_masked`); interventional test of attribution (injected text removed): `--variant clean --only-keys run/masked_keys_<tag>.json` | `python -m experiments.injecagent.evaluate --tags qwen2.5-7b llama3.1-8b qwen2.5-32b qwen2.5-72b` |
 | AgentDojo v1.2.1 (97 user tasks + 25 attacked pairs per suite) | `scripts/serve_mlx_forever.sh Qwen/Qwen2.5-7B-Instruct 8090 16`; `python -m experiments.agentdojo_exp.run --port 8090 --model-id Qwen/Qwen2.5-7B-Instruct --model-name Qwen --tag qwen2.5-7b --per-suite 25 --configs none --shadow`; then `--rerun-from-shadow --configs rg_attr_verify rg_attr_block rg_maxtaint s5_filter pi_detector rg_attr_verify_t05` | `python -m experiments.agentdojo_exp.evaluate --tag qwen2.5-7b` |
 | RAG answer-level (BIPIA) + interventions | `python -m experiments.rag.run build`; `python -m experiments.rag.run retrieve`; `python -m experiments.rag.run generate --model <hf-id> --tag <tag> --phase A` (phase B = leave-one-out / clean replacement); `python -m experiments.rag.judge --tag <tag>` | `python -m experiments.rag.evaluate --tags qwen2.5-7b qwen2.5-32b` |
 | Cross-session memory poisoning | `python -m experiments.memory.run --model <hf-id> --tag <tag> [--channel message]` | `python -m experiments.memory.evaluate --tags qwen2.5-7b qwen2.5-32b [--channel message]` |
