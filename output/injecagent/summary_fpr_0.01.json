@@ -1,4 +1,218 @@
 {
+  "qwen2.5-7b": {
+    "no_defense": {
+      "n": 2108,
+      "n_succ_nodef": 661,
+      "asr_all": 0.3135673624288425,
+      "asr_valid": 0.5237717908082409,
+      "containment": 0.0
+    },
+    "S5 filter [regex]": {
+      "n": 2108,
+      "n_succ_nodef": 661,
+      "asr_all": 0.12286527514231499,
+      "asr_valid": 0.205229793977813,
+      "containment": 0.6081694402420574
+    },
+    "S5 filter [semantic]": {
+      "n": 2108,
+      "n_succ_nodef": 661,
+      "asr_all": 0.21015180265654648,
+      "asr_valid": 0.3510301109350238,
+      "containment": 0.329803328290469
+    },
+    "S5 filter [classifier]": {
+      "n": 2108,
+      "n_succ_nodef": 661,
+      "asr_all": 0.17504743833017078,
+      "asr_valid": 0.29239302694136293,
+      "containment": 0.44175491679273826
+    },
+    "S5 filter [regex|classifier]": {
+      "n": 2108,
+      "n_succ_nodef": 661,
+      "asr_all": 0.11812144212523719,
+      "asr_valid": 0.19730586370839936,
+      "containment": 0.6232980332829047
+    },
+    "S7 args-only [regex]": {
+      "n": 2108,
+      "n_succ_nodef": 661,
+      "asr_all": 0.31214421252371916,
+      "asr_valid": 0.5213946117274167,
+      "containment": 0.0045385779122541605
+    },
+    "S7 max-taint (R1 rule) [regex]": {
+      "n": 2108,
+      "n_succ_nodef": 661,
+      "asr_all": 0.12286527514231499,
+      "asr_valid": 0.205229793977813,
+      "containment": 0.6081694402420574
+    },
+    "S6+S7 [regex] review=allow": {
+      "n": 2108,
+      "n_succ_nodef": 661,
+      "asr_all": 0.12618595825426945,
+      "asr_valid": 0.21077654516640254,
+      "containment": 0.5975794251134644
+    },
+    "S6+S7 [classifier] review=allow": {
+      "n": 2108,
+      "n_succ_nodef": 661,
+      "asr_all": 0.17789373814041745,
+      "asr_valid": 0.2971473851030111,
+      "containment": 0.43267776096822996
+    },
+    "S6+S7 [regex|classifier] review=allow": {
+      "n": 2108,
+      "n_succ_nodef": 661,
+      "asr_all": 0.12144212523719165,
+      "asr_valid": 0.20285261489698891,
+      "containment": 0.6127080181543116
+    },
+    "S6+S7 [regex|classifier] review=block": {
+      "n": 2108,
+      "n_succ_nodef": 661,
+      "asr_all": 0.004269449715370019,
+      "asr_valid": 0.0071315372424722665,
+      "containment": 0.9863842662632375
+    },
+    "S6+S7 [regex|classifier] review=verify": {
+      "n": 2108,
+      "n_succ_nodef": 661,
+      "asr_all": 0.029411764705882353,
+      "asr_valid": 0.0491283676703645,
+      "containment": 0.9062027231467473
+    },
+    "S6+S7 [none] review=verify": {
+      "n": 2108,
+      "n_succ_nodef": 661,
+      "asr_all": 0.058349146110056926,
+      "asr_valid": 0.09746434231378764,
+      "containment": 0.8139183055975794
+    },
+    "S7 re-execution check on every side-effecting call (no S5, no S6)": {
+      "n": 2108,
+      "n_succ_nodef": 661,
+      "asr_all": 0.056451612903225805,
+      "asr_valid": 0.09429477020602219,
+      "containment": 0.8199697428139183
+    },
+    "S5 filter [regex|classifier] + re-execution check (no S6)": {
+      "n": 2108,
+      "n_succ_nodef": 661,
+      "asr_all": 0.026565464895635674,
+      "asr_valid": 0.044374009508716325,
+      "containment": 0.9152798789712556
+    }
+  },
+  "llama3.1-8b": {
+    "no_defense": {
+      "n": 2108,
+      "n_succ_nodef": 781,
+      "asr_all": 0.3704933586337761,
+      "asr_valid": 0.7042380522993688,
+      "containment": 0.0
+    },
+    "S5 filter [regex]": {
+      "n": 2108,
+      "n_succ_nodef": 781,
+      "asr_all": 0.13377609108159394,
+      "asr_valid": 0.25428313796212804,
+      "containment": 0.6389244558258643
+    },
+    "S5 filter [semantic]": {
+      "n": 2108,
+      "n_succ_nodef": 781,
+      "asr_all": 0.25901328273244784,
+      "asr_valid": 0.49233543733092877,
+      "containment": 0.30089628681177977
+    },
+    "S5 filter [classifier]": {
+      "n": 2108,
+      "n_succ_nodef": 781,
+      "asr_all": 0.19497153700189754,
+      "asr_valid": 0.37060414788097384,
+      "containment": 0.4737516005121639
+    },
+    "S5 filter [regex|classifier]": {
+      "n": 2108,
+      "n_succ_nodef": 781,
+      "asr_all": 0.12855787476280836,
+      "asr_valid": 0.24436429215509467,
+      "containment": 0.6530089628681178
+    },
+    "S7 args-only [regex]": {
+      "n": 2108,
+      "n_succ_nodef": 781,
+      "asr_all": 0.3704933586337761,
+      "asr_valid": 0.7042380522993688,
+      "containment": 0.0
+    },
+    "S7 max-taint (R1 rule) [regex]": {
+      "n": 2108,
+      "n_succ_nodef": 781,
+      "asr_all": 0.13377609108159394,
+      "asr_valid": 0.25428313796212804,
+      "containment": 0.6389244558258643
+    },
+    "S6+S7 [regex] review=allow": {
+      "n": 2108,
+      "n_succ_nodef": 781,
+      "asr_all": 0.13946869070208728,
+      "asr_valid": 0.2651036970243463,
+      "containment": 0.6235595390524968
+    },
+    "S6+S7 [classifier] review=allow": {
+      "n": 2108,
+      "n_succ_nodef": 781,
+      "asr_all": 0.198292220113852,
+      "asr_valid": 0.3769161406672678,
+      "containment": 0.4647887323943662
+    },
+    "S6+S7 [regex|classifier] review=allow": {
+      "n": 2108,
+      "n_succ_nodef": 781,
+      "asr_all": 0.1342504743833017,
+      "asr_valid": 0.2551848512173129,
+      "containment": 0.6376440460947503
+    },
+    "S6+S7 [regex|classifier] review=block": {
+      "n": 2108,
+      "n_succ_nodef": 781,
+      "asr_all": 0.007115749525616698,
+      "asr_valid": 0.013525698827772768,
+      "containment": 0.9807938540332907
+    },
+    "S6+S7 [regex|classifier] review=verify": {
+      "n": 2108,
+      "n_succ_nodef": 781,
+      "asr_all": 0.05218216318785579,
+      "asr_valid": 0.09918845807033363,
+      "containment": 0.8591549295774648
+    },
+    "S6+S7 [none] review=verify": {
+      "n": 2108,
+      "n_succ_nodef": 781,
+      "asr_all": 0.11005692599620494,
+      "asr_valid": 0.20919747520288548,
+      "containment": 0.7029449423815621
+    },
+    "S7 re-execution check on every side-effecting call (no S5, no S6)": {
+      "n": 2108,
+      "n_succ_nodef": 781,
+      "asr_all": 0.10531309297912714,
+      "asr_valid": 0.20018034265103696,
+      "containment": 0.7157490396927016
+    },
+    "S5 filter [regex|classifier] + re-execution check (no S6)": {
+      "n": 2108,
+      "n_succ_nodef": 781,
+      "asr_all": 0.04554079696394687,
+      "asr_valid": 0.08656447249774572,
+      "containment": 0.8770806658130602
+    }
+  },
   "qwen2.5-32b": {
     "no_defense": {
       "n": 1054,
@@ -90,6 +304,127 @@
       "asr_all": 0.006641366223908918,
       "asr_valid": 0.0069721115537848604,
       "containment": 0.9585798816568047
+    },
+    "S7 re-execution check on every side-effecting call (no S5, no S6)": {
+      "n": 1054,
+      "n_succ_nodef": 169,
+      "asr_all": 0.006641366223908918,
+      "asr_valid": 0.0069721115537848604,
+      "containment": 0.9585798816568047
+    },
+    "S5 filter [regex|classifier] + re-execution check (no S6)": {
+      "n": 1054,
+      "n_succ_nodef": 169,
+      "asr_all": 0.0018975332068311196,
+      "asr_valid": 0.00199203187250996,
+      "containment": 0.9881656804733728
+    }
+  },
+  "qwen2.5-72b": {
+    "no_defense": {
+      "n": 422,
+      "n_succ_nodef": 24,
+      "asr_all": 0.05687203791469194,
+      "asr_valid": 0.06030150753768844,
+      "containment": 0.0
+    },
+    "S5 filter [regex]": {
+      "n": 422,
+      "n_succ_nodef": 24,
+      "asr_all": 0.018957345971563982,
+      "asr_valid": 0.020100502512562814,
+      "containment": 0.6666666666666666
+    },
+    "S5 filter [semantic]": {
+      "n": 422,
+      "n_succ_nodef": 24,
+      "asr_all": 0.04265402843601896,
+      "asr_valid": 0.04522613065326633,
+      "containment": 0.25
+    },
+    "S5 filter [classifier]": {
+      "n": 422,
+      "n_succ_nodef": 24,
+      "asr_all": 0.023696682464454975,
+      "asr_valid": 0.02512562814070352,
+      "containment": 0.5833333333333334
+    },
+    "S5 filter [regex|classifier]": {
+      "n": 422,
+      "n_succ_nodef": 24,
+      "asr_all": 0.018957345971563982,
+      "asr_valid": 0.020100502512562814,
+      "containment": 0.6666666666666666
+    },
+    "S7 args-only [regex]": {
+      "n": 422,
+      "n_succ_nodef": 24,
+      "asr_all": 0.05687203791469194,
+      "asr_valid": 0.06030150753768844,
+      "containment": 0.0
+    },
+    "S7 max-taint (R1 rule) [regex]": {
+      "n": 422,
+      "n_succ_nodef": 24,
+      "asr_all": 0.018957345971563982,
+      "asr_valid": 0.020100502512562814,
+      "containment": 0.6666666666666666
+    },
+    "S6+S7 [regex] review=allow": {
+      "n": 422,
+      "n_succ_nodef": 24,
+      "asr_all": 0.018957345971563982,
+      "asr_valid": 0.020100502512562814,
+      "containment": 0.6666666666666666
+    },
+    "S6+S7 [classifier] review=allow": {
+      "n": 422,
+      "n_succ_nodef": 24,
+      "asr_all": 0.023696682464454975,
+      "asr_valid": 0.02512562814070352,
+      "containment": 0.5833333333333334
+    },
+    "S6+S7 [regex|classifier] review=allow": {
+      "n": 422,
+      "n_succ_nodef": 24,
+      "asr_all": 0.018957345971563982,
+      "asr_valid": 0.020100502512562814,
+      "containment": 0.6666666666666666
+    },
+    "S6+S7 [regex|classifier] review=block": {
+      "n": 422,
+      "n_succ_nodef": 24,
+      "asr_all": 0.0,
+      "asr_valid": 0.0,
+      "containment": 1.0
+    },
+    "S6+S7 [regex|classifier] review=verify": {
+      "n": 422,
+      "n_succ_nodef": 24,
+      "asr_all": 0.0,
+      "asr_valid": 0.0,
+      "containment": 1.0
+    },
+    "S6+S7 [none] review=verify": {
+      "n": 422,
+      "n_succ_nodef": 24,
+      "asr_all": 0.0071090047393364926,
+      "asr_valid": 0.007537688442211055,
+      "containment": 0.875
+    },
+    "S7 re-execution check on every side-effecting call (no S5, no S6)": {
+      "n": 422,
+      "n_succ_nodef": 24,
+      "asr_all": 0.0071090047393364926,
+      "asr_valid": 0.007537688442211055,
+      "containment": 0.875
+    },
+    "S5 filter [regex|classifier] + re-execution check (no S6)": {
+      "n": 422,
+      "n_succ_nodef": 24,
+      "asr_all": 0.0,
+      "asr_valid": 0.0,
+      "containment": 1.0
     }
   }
 }
