@@ -1312,12 +1312,225 @@
     "mcnemar_vs_nodef_p": 2.2227587494850775e-162,
     "mcnemar_vs_s5ens_p": 1.4613217661413093e-15
   },
+  "S7 re-execution check on every side-effecting call (no S5, no S6)": {
+    "n": 2108,
+    "n_valid": 1262,
+    "n_succ_nodef": 661,
+    "asr_all": 0.056451612903225805,
+    "asr_all_ci": [
+      0.047438,
+      0.066414
+    ],
+    "asr_valid": 0.09429477020602219,
+    "containment": 0.8199697428139183,
+    "containment_ci": [
+      0.789713,
+      0.847201
+    ],
+    "n_succ_strict": 415,
+    "asr_strict": 0.04554079696394687,
+    "containment_strict": 0.7686746987951807,
+    "by_setting": {
+      "base": {
+        "n": 1054,
+        "n_valid": 640,
+        "n_succ_nodef": 259,
+        "asr_all": 0.05502846299810247,
+        "asr_all_ci": [
+          0.041746,
+          0.06926
+        ],
+        "asr_valid": 0.090625,
+        "containment": 0.7760617760617761,
+        "containment_ci": [
+          0.725869,
+          0.822394
+        ],
+        "n_succ_strict": 173,
+        "asr_strict": 0.04269449715370019,
+        "containment_strict": 0.7398843930635838
+      },
+      "enhanced": {
+        "n": 1054,
+        "n_valid": 622,
+        "n_succ_nodef": 402,
+        "asr_all": 0.05787476280834915,
+        "asr_all_ci": [
+          0.043643,
+          0.073055
+        ],
+        "asr_valid": 0.09807073954983923,
+        "containment": 0.8482587064676617,
+        "containment_ci": [
+          0.810945,
+          0.883085
+        ],
+        "n_succ_strict": 242,
+        "asr_strict": 0.04838709677419355,
+        "containment_strict": 0.7892561983471075
+      }
+    },
+    "by_attack": {
+      "dh": {
+        "n": 1020,
+        "n_valid": 695,
+        "n_succ_nodef": 324,
+        "asr_all": 0.08333333333333333,
+        "asr_all_ci": [
+          0.066667,
+          0.10098
+        ],
+        "asr_valid": 0.1223021582733813,
+        "containment": 0.7376543209876543,
+        "containment_ci": [
+          0.688272,
+          0.787037
+        ],
+        "n_succ_strict": 324,
+        "asr_strict": 0.08333333333333333,
+        "containment_strict": 0.7376543209876543
+      },
+      "ds": {
+        "n": 1088,
+        "n_valid": 567,
+        "n_succ_nodef": 337,
+        "asr_all": 0.03125,
+        "asr_all_ci": [
+          0.022059,
+          0.042279
+        ],
+        "asr_valid": 0.059964726631393295,
+        "containment": 0.8991097922848664,
+        "containment_ci": [
+          0.866469,
+          0.928783
+        ],
+        "n_succ_strict": 91,
+        "asr_strict": 0.01011029411764706,
+        "containment_strict": 0.8791208791208791
+      }
+    },
+    "mcnemar_vs_nodef_p": 1.3892242184281734e-163,
+    "mcnemar_vs_s5ens_p": 1.6077915388611585e-16
+  },
+  "S5 filter [regex|classifier] + re-execution check (no S6)": {
+    "n": 2108,
+    "n_valid": 1262,
+    "n_succ_nodef": 661,
+    "asr_all": 0.026565464895635674,
+    "asr_all_ci": [
+      0.019924,
+      0.033681
+    ],
+    "asr_valid": 0.044374009508716325,
+    "containment": 0.9152798789712556,
+    "containment_ci": [
+      0.892587,
+      0.934947
+    ],
+    "n_succ_strict": 415,
+    "asr_strict": 0.020398481973434534,
+    "containment_strict": 0.8963855421686747,
+    "by_setting": {
+      "base": {
+        "n": 1054,
+        "n_valid": 640,
+        "n_succ_nodef": 259,
+        "asr_all": 0.05313092979127135,
+        "asr_all_ci": [
+          0.039848,
+          0.067362
+        ],
+        "asr_valid": 0.0875,
+        "containment": 0.7837837837837838,
+        "containment_ci": [
+          0.733591,
+          0.830116
+        ],
+        "n_succ_strict": 173,
+        "asr_strict": 0.04079696394686907,
+        "containment_strict": 0.7514450867052023
+      },
+      "enhanced": {
+        "n": 1054,
+        "n_valid": 622,
+        "n_succ_nodef": 402,
+        "asr_all": 0.0,
+        "asr_all_ci": [
+          0.0,
+          0.0
+        ],
+        "asr_valid": 0.0,
+        "containment": 1.0,
+        "containment_ci": [
+          1.0,
+          1.0
+        ],
+        "n_succ_strict": 242,
+        "asr_strict": 0.0,
+        "containment_strict": 1.0
+      }
+    },
+    "by_attack": {
+      "dh": {
+        "n": 1020,
+        "n_valid": 695,
+        "n_succ_nodef": 324,
+        "asr_all": 0.03627450980392157,
+        "asr_all_ci": [
+          0.02451,
+          0.048039
+        ],
+        "asr_valid": 0.053237410071942444,
+        "containment": 0.8858024691358025,
+        "containment_ci": [
+          0.851852,
+          0.919753
+        ],
+        "n_succ_strict": 324,
+        "asr_strict": 0.03627450980392157,
+        "containment_strict": 0.8858024691358025
+      },
+      "ds": {
+        "n": 1088,
+        "n_valid": 567,
+        "n_succ_nodef": 337,
+        "asr_all": 0.017463235294117647,
+        "asr_all_ci": [
+          0.01011,
+          0.025735
+        ],
+        "asr_valid": 0.03350970017636684,
+        "containment": 0.9436201780415431,
+        "containment_ci": [
+          0.916914,
+          0.967359
+        ],
+        "n_succ_strict": 91,
+        "asr_strict": 0.0055147058823529415,
+        "containment_strict": 0.9340659340659341
+      }
+    },
+    "mcnemar_vs_nodef_p": 1.5061999156893026e-182,
+    "mcnemar_vs_s5ens_p": 1.5930919111324523e-58
+  },
   "_attribution_coverage": {
     "n": 661,
     "tainted_value": 606,
     "tainted_action": 589,
     "either": 652,
     "evidence_ens": 405
+  },
+  "_clean_intervention": {
+    "n": 717,
+    "undone": 710,
+    "undone_ci": [
+      0.979986,
+      0.995263
+    ],
+    "tainted": 660,
+    "undone_and_tainted": 656,
+    "undone_not_tainted": 54
   },
   "_evidence_recall": {
     "base": {
@@ -1756,6 +1969,44 @@
       "asr_strict": 0.04174573055028463,
       "containment_strict": 0.8018018018018018
     },
+    "S7 re-execution check on every side-effecting call (no S5, no S6)": {
+      "n": 1054,
+      "n_valid": 639,
+      "n_succ_nodef": 289,
+      "asr_all": 0.05977229601518026,
+      "asr_all_ci": [
+        0.04649,
+        0.074004
+      ],
+      "asr_valid": 0.09859154929577464,
+      "containment": 0.7820069204152249,
+      "containment_ci": [
+        0.733564,
+        0.83045
+      ],
+      "n_succ_strict": 222,
+      "asr_strict": 0.04933586337760911,
+      "containment_strict": 0.7657657657657657
+    },
+    "S5 filter [regex|classifier] + re-execution check (no S6)": {
+      "n": 1054,
+      "n_valid": 639,
+      "n_succ_nodef": 289,
+      "asr_all": 0.055977229601518026,
+      "asr_all_ci": [
+        0.042694,
+        0.070209
+      ],
+      "asr_valid": 0.09233176838810642,
+      "containment": 0.7958477508650519,
+      "containment_ci": [
+        0.747405,
+        0.84083
+      ],
+      "n_succ_strict": 222,
+      "asr_strict": 0.04554079696394687,
+      "containment_strict": 0.7837837837837838
+    },
     "_attribution_coverage": {
       "n": 289,
       "tainted_value": 159,
@@ -1766,10 +2017,10 @@
   },
   "_gate_latency_ms": {
     "n": 4494,
-    "mean": 0.09698098597730603,
-    "p50": 0.07841701153665781,
-    "p95": 0.1971670426428318,
-    "max": 0.368167064152658
+    "mean": 0.10142946287810978,
+    "p50": 0.0834159945952706,
+    "p95": 0.20758399477927014,
+    "max": 0.3620829957071692
   },
   "_meta": {
     "tag": "qwen2.5-7b",
