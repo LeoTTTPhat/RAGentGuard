@@ -1,0 +1,41 @@
+name: Publish prepared RAGentGuard release
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-prepared-release.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Import and verify the prepared release
+        shell: bash
+        run: |
+          set -euo pipefail
+          git bundle verify RAGentGuard-v0.2.0.bundle
+          git fetch ./RAGentGuard-v0.2.0.bundle refs/heads/main:refs/heads/prepared-release refs/tags/v0.2.0:refs/tags/v0.2.0
+          test "$(git rev-parse prepared-release)" = c266a79faf812a8cee57bfc2a8513a2df7279237
+          release_dir="$RUNNER_TEMP/ragentguard-release"
+          git worktree add "$release_dir" prepared-release
+          python -m pip install pytest
+          (cd "$release_dir" && PYTHON=python bash reproduce.sh)
+      - name: Publish source files and version tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          release_tree=$(git rev-parse 'prepared-release^{tree}')
+          publish_commit=$(git commit-tree "$release_tree" -p prepared-release -p "$GITHUB_SHA" -m 'Publish prepared RAGentGuard v0.2.0 release')
+          git push origin "$publish_commit:refs/heads/main" refs/tags/v0.2.0
